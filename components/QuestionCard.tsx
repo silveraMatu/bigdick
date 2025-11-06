@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 
 interface QuestionCardProps {
   number: number;
@@ -7,7 +7,7 @@ interface QuestionCardProps {
   children: React.ReactNode;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ number, title, children }) => {
+const QuestionCard: FC<QuestionCardProps> = ({ number, title, children }) => {
   return (
     <div className="bg-gray-800/50 p-6 rounded-lg border border-gray-700 shadow-md">
       <h3 className="text-lg font-semibold text-white mb-4">

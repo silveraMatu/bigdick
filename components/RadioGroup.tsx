@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 import { Option } from '../types';
 
 interface RadioGroupProps {
@@ -9,7 +9,7 @@ interface RadioGroupProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const RadioGroup: React.FC<RadioGroupProps> = ({ name, options, selectedValue, onChange }) => {
+const RadioGroup: FC<RadioGroupProps> = ({ name, options, selectedValue, onChange }) => {
   return (
     <div className="space-y-3">
       {options.map((option) => (

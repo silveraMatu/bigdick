@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 
 interface TextInputProps {
   name: string;
@@ -8,7 +8,7 @@ interface TextInputProps {
   placeholder?: string;
 }
 
-const TextInput: React.FC<TextInputProps> = ({ name, value, onChange, placeholder }) => {
+const TextInput: FC<TextInputProps> = ({ name, value, onChange, placeholder }) => {
   return (
     <input
       type="text"

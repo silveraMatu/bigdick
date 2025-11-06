@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 
 interface TextAreaProps {
   name: string;
@@ -8,7 +8,7 @@ interface TextAreaProps {
   placeholder?: string;
 }
 
-const TextArea: React.FC<TextAreaProps> = ({ name, value, onChange, placeholder }) => {
+const TextArea: FC<TextAreaProps> = ({ name, value, onChange, placeholder }) => {
   return (
     <textarea
       name={name}

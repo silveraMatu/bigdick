@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 import { Option } from '../types';
 
 interface CheckboxGroupProps {
@@ -10,7 +10,7 @@ interface CheckboxGroupProps {
   maxSelections?: number;
 }
 
-const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ name, options, selectedValues, onChange, maxSelections }) => {
+const CheckboxGroup: FC<CheckboxGroupProps> = ({ name, options, selectedValues, onChange, maxSelections }) => {
   const isMaxSelected = maxSelections ? selectedValues.length >= maxSelections : false;
 
   return (

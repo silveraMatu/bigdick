@@ -1,5 +1,5 @@
 
-import React from 'react';
+import {FC} from 'react';
 
 interface NumericInputProps {
   name: string;
@@ -8,7 +8,7 @@ interface NumericInputProps {
   placeholder?: string;
 }
 
-const NumericInput: React.FC<NumericInputProps> = ({ name, value, onChange, placeholder }) => {
+const NumericInput: FC<NumericInputProps> = ({ name, value, onChange, placeholder }) => {
   return (
     <input
       type="number"
