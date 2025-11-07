@@ -1,10 +1,10 @@
-import { Form } from "./pages/Form";
 import { FC } from "react";
+import { Form } from "./pages/Form";
 
-const App:FC= () => {
+const App: FC = () => {
   return (
-    <Form/>
-  )
+    <Form />
+  );
 };
 
 export default App;

@@ -1,5 +1,6 @@
 import { useState, useMemo, FC } from 'react';
 import { SurveyFormData } from '../types';
+// Importamos todas las opciones desde constants.ts
 import {
   GENDER_OPTIONS,
   TIME_SLOT_OPTIONS,
@@ -23,7 +24,11 @@ import TextArea from '../components/TextArea';
 
 const TOTAL_QUESTIONS = 15;
 
-export const Form: FC = ()=>{
+// 👇 REEMPLAZA ESTO CON TU URL REAL DE RENDER CUANDO DEPLOYES EL BACKEND
+// Para local, si tu backend corre en el puerto 3000 y el front en otro (ej 5173), usa localhost:3000
+const API_URL = "https://form-big-data-backend.onrender.com/api"; 
+
+export const Form: FC = () => {
   const [formData, setFormData] = useState<SurveyFormData>({
     age: '',
     gender: '',
@@ -43,6 +48,8 @@ export const Form: FC = ()=>{
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const answeredQuestions = useMemo(() => {
     return Object.values(formData).filter(value => {
@@ -78,10 +85,56 @@ export const Form: FC = ()=>{
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // --- FUNCIÓN DE ENVÍO (CONEXIÓN AL BACKEND) ---
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form Submitted:', formData);
-    setIsSubmitted(true);
+    if (answeredQuestions < TOTAL_QUESTIONS) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    // 1. Transformamos los datos al formato que espera el backend (en español)
+    const dataForBackend = {
+      edad: Number(formData.age),
+      genero: formData.gender,
+      franjaHoraria: formData.timeSlot,
+      frecuenciaEscucha: formData.frequency,
+      lugaresEscucha: formData.locations,
+      generos: formData.genres,
+      artistaSugerido: formData.favoriteArtist,
+      musicaEpoca: formData.musicEra,
+      importanciaIdioma: formData.languageImportance,
+      interesProgramas: formData.specialPrograms,
+      calidadTecnica: formData.technicalQuality,
+      calidadSeleccion: formData.musicSelection,
+      franjaMasVariedad: formData.varietyNeeded,
+      comoNosEncontro: formData.discoveryMethod,
+      sugerenciaAdicional: formData.suggestions,
+    };
+
+    try {
+      // 2. Hacemos la petición POST
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataForBackend),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        // Si el backend responde con error (ej. 400 o 500)
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || 'Error al guardar la encuesta.');
+      }
+    } catch (error) {
+      console.error('Error al enviar:', error);
+      setSubmitError('No se pudo conectar con el servidor. Verifica que el backend esté corriendo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSubmitted) {
@@ -90,7 +143,7 @@ export const Form: FC = ()=>{
         <div className="bg-gray-800 p-8 rounded-2xl shadow-2xl text-center max-w-lg w-full">
           <svg className="w-16 h-16 mx-auto mb-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           <h1 className="text-3xl font-bold mb-2">¡Gracias por tu participación!</h1>
-          <p className="text-gray-400">Tus respuestas han sido enviadas. Valoramos mucho tu opinión para mejorar nuestra estación de radio.</p>
+          <p className="text-gray-400">Tus respuestas han sido guardadas en nuestra base de datos.</p>
         </div>
       </div>
     );
@@ -119,7 +172,7 @@ export const Form: FC = ()=>{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-12">
-          {/* Section 1 */}
+          {/* Sección 1 */}
           <section>
             <h2 className="text-2xl font-bold border-b-2 border-teal-500 pb-2 mb-6 text-white">
               Sección 1: Datos Demográficos y Hábitos de Escucha
@@ -129,6 +182,7 @@ export const Form: FC = ()=>{
                 <NumericInput name="age" value={formData.age} onChange={handleInputChange} placeholder="p. ej., 32" />
               </QuestionCard>
               <QuestionCard number={2} title="¿Cuál es tu género?">
+                {/* AQUÍ SE USAN LAS CONSTANTES */}
                 <RadioGroup name="gender" options={GENDER_OPTIONS} selectedValue={formData.gender} onChange={handleInputChange} />
               </QuestionCard>
               <QuestionCard number={3} title="¿En qué franja horaria sueles sintonizarnos o escuchar música en general?">
@@ -143,7 +197,7 @@ export const Form: FC = ()=>{
             </div>
           </section>
 
-          {/* Section 2 */}
+          {/* Sección 2 */}
           <section>
             <h2 className="text-2xl font-bold border-b-2 border-teal-500 pb-2 mb-6 text-white">
               Sección 2: Preferencias y Tendencias Musicales
@@ -167,7 +221,7 @@ export const Form: FC = ()=>{
             </div>
           </section>
 
-          {/* Section 3 */}
+          {/* Sección 3 */}
           <section>
             <h2 className="text-2xl font-bold border-b-2 border-teal-500 pb-2 mb-6 text-white">
               Sección 3: Calidad de la Emisión y Retroalimentación
@@ -191,22 +245,30 @@ export const Form: FC = ()=>{
             </div>
           </section>
 
+          {/* Botón de envío */}
           <div className="text-center pt-6">
             <button 
               type="submit"
               className="bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-12 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-teal-900/50 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-              disabled={answeredQuestions < TOTAL_QUESTIONS}
+              disabled={answeredQuestions < TOTAL_QUESTIONS || isSubmitting}
             >
-              Enviar Encuesta
+              {isSubmitting ? 'Enviando...' : 'Enviar Encuesta'}
             </button>
-             {answeredQuestions < TOTAL_QUESTIONS && (
+             
+             {answeredQuestions < TOTAL_QUESTIONS && !isSubmitting && (
                 <p className="text-sm text-gray-500 mt-4">
                     Por favor, responde todas las preguntas para poder enviar el formulario.
                 </p>
+            )}
+            
+            {submitError && (
+              <p className="text-sm text-red-400 mt-4">
+                {submitError}
+              </p>
             )}
           </div>
         </form>
       </div>
     </div>
-    )
-}
+  );
+};
