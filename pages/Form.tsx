@@ -23,7 +23,10 @@ import TextArea from '../components/TextArea';
 
 const TOTAL_QUESTIONS = 15;
 
-export const Form: FC = ()=>{
+// Define la URL de la API del backend
+const API_URL = "https://form-big-data-backend.onrender.com/api";
+
+export const Form: FC = () => {
   const [formData, setFormData] = useState<SurveyFormData>({
     age: '',
     gender: '',
@@ -43,6 +46,8 @@ export const Form: FC = ()=>{
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Estado de carga
+  const [submitError, setSubmitError] = useState<string | null>(null); // Estado de error
 
   const answeredQuestions = useMemo(() => {
     return Object.values(formData).filter(value => {
@@ -78,12 +83,62 @@ export const Form: FC = ()=>{
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // *** FUNCIÓN handleSubmit MODIFICADA ***
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form Submitted:', formData);
-    setIsSubmitted(true);
+    if (answeredQuestions < TOTAL_QUESTIONS) return; // Doble chequeo
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    // 1. Transformación de Datos (Mapeo)
+    const dataForBackend = {
+      // Mapeo de Frontend (formData) a Backend (FormularioRespuesta)
+      edad: Number(formData.age), // Convertir a número
+      genero: formData.gender,
+      franjaHoraria: formData.timeSlot,
+      frecuenciaEscucha: formData.frequency,
+      lugaresEscucha: formData.locations, // Mismo nombre en este caso
+      generos: formData.genres,           // Mismo nombre
+      artistaSugerido: formData.favoriteArtist,
+      musicaEpoca: formData.musicEra,
+      importanciaIdioma: formData.languageImportance,
+      interesProgramas: formData.specialPrograms,
+      calidadTecnica: formData.technicalQuality,
+      calidadSeleccion: formData.musicSelection,
+      franjaMasVariedad: formData.varietyNeeded,
+      comoNosEncontro: formData.discoveryMethod,
+      sugerenciaAdicional: formData.suggestions,
+    };
+
+    try {
+      // 2. Petición Fetch al Backend
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataForBackend),
+      });
+
+      if (response.ok) {
+        // 3. Manejo de Respuesta Exitosa
+        setIsSubmitted(true);
+      } else {
+        // Manejo de error del servidor
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || 'Error al enviar la encuesta.');
+      }
+    } catch (error) {
+      // 4. Manejo de Error de Red o Fetch
+      console.error('Error en handleSubmit:', error);
+      setSubmitError('No se pudo enviar la encuesta. Por favor, inténtalo de nuevo más tarde.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // --- VISTA DE ÉXITO ---
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
@@ -96,6 +151,7 @@ export const Form: FC = ()=>{
     );
   }
 
+  // --- VISTA DEL FORMULARIO (Sin cambios) ---
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200 font-sans p-4 sm:p-6 md:p-8">
       <div className="max-w-3xl mx-auto">
@@ -191,22 +247,30 @@ export const Form: FC = ()=>{
             </div>
           </section>
 
+          {/* --- BOTÓN DE ENVÍO Y MANEJO DE ERRORES --- */}
           <div className="text-center pt-6">
             <button 
               type="submit"
               className="bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-12 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg shadow-teal-900/50 disabled:bg-gray-600 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-              disabled={answeredQuestions < TOTAL_QUESTIONS}
+              disabled={answeredQuestions < TOTAL_QUESTIONS || isSubmitting}
             >
-              Enviar Encuesta
+              {isSubmitting ? 'Enviando...' : 'Enviar Encuesta'}
             </button>
-             {answeredQuestions < TOTAL_QUESTIONS && (
+             
+             {answeredQuestions < TOTAL_QUESTIONS && !isSubmitting && (
                 <p className="text-sm text-gray-500 mt-4">
                     Por favor, responde todas las preguntas para poder enviar el formulario.
                 </p>
+            )}
+            
+            {submitError && (
+              <p className="text-sm text-red-400 mt-4">
+                {submitError}
+              </p>
             )}
           </div>
         </form>
       </div>
     </div>
-    )
-}
+  );
+};
